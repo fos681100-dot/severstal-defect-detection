@@ -94,10 +94,10 @@ def choose_images(df, n, mode, seed=42):
             used.add(secim)
             picks.append((secim, etiket))
 
-    take(df["n_defects"] == 0, "kusursuz goruntu")
-    take(df["has3"] == 1, "Class 3 (en cok ornekli sinif)")
-    take(df["has2"] == 1, "Class 2 (en az ornekli sinif)")
-    take(df["n_defects"] > 1, "birden fazla kusur tipi")
+    take(df["n_defects"] == 0, "defect-free image")
+    take(df["has3"] == 1, "Class 3 (most frequent class)")
+    take(df["has2"] == 1, "Class 2 (rarest class)")
+    take(df["n_defects"] > 1, "multiple defect types")
     take(df["has1"] == 1, "Class 1")
     take(df["has4"] == 1, "Class 4")
 
@@ -179,12 +179,12 @@ def main():
             axes[satir, k].axis("off")
 
         if satir == 0:
-            axes[satir, 0].set_title("Orijinal fotograf", fontsize=13, pad=10)
-            axes[satir, 1].set_title("Gercek maske (insan etiketi)", fontsize=13, pad=10)
-            axes[satir, 2].set_title("Modelin tahmini", fontsize=13, pad=10)
+            axes[satir, 0].set_title("Input image", fontsize=13, pad=10)
+            axes[satir, 1].set_title("Ground truth (human annotation)", fontsize=13, pad=10)
+            axes[satir, 2].set_title("Model prediction", fontsize=13, pad=10)
 
-        gercek_siniflar = [CLASS_NAMES[c] for c in range(4) if gercek[c].sum() > 0] or ["kusur yok"]
-        tahmin_siniflar = [CLASS_NAMES[c] for c in range(4) if tahmin[c].sum() > 0] or ["kusur yok"]
+        gercek_siniflar = [CLASS_NAMES[c] for c in range(4) if gercek[c].sum() > 0] or ["no defect"]
+        tahmin_siniflar = [CLASS_NAMES[c] for c in range(4) if tahmin[c].sum() > 0] or ["no defect"]
 
         sol_yazi = f"{row['ImageId']}"
         if etiket:
@@ -193,12 +193,12 @@ def main():
         axes[satir, 0].axis("off")
         axes[satir, 0].text(0.01, -0.12, sol_yazi, transform=axes[satir, 0].transAxes,
                             fontsize=9, va="top")
-        axes[satir, 1].text(0.01, -0.12, "Gercek: " + ", ".join(gercek_siniflar),
+        axes[satir, 1].text(0.01, -0.12, "Ground truth: " + ", ".join(gercek_siniflar),
                             transform=axes[satir, 1].transAxes, fontsize=9, va="top")
 
         renk = "#1a7f37" if skor >= 0.9 else ("#9a6700" if skor >= 0.7 else "#a40e26")
         axes[satir, 2].text(0.01, -0.12,
-                            f"Tahmin: {', '.join(tahmin_siniflar)}   |   Dice = {skor:.4f}",
+                            f"Prediction: {', '.join(tahmin_siniflar)}   |   Dice = {skor:.4f}",
                             transform=axes[satir, 2].transAxes, fontsize=9, va="top",
                             color=renk, fontweight="bold")
 
@@ -222,8 +222,8 @@ def main():
     tablo = pd.DataFrame(satirlar)
     tablo.to_csv(os.path.join(out_dir, "demo_table.csv"), index=False)
 
-    md = ["## Demo: modelin hic gormedigi test goruntulerindeki tahminleri", "",
-          "| Goruntu | Durum | Gercek siniflar | Tahmin | Dice |",
+    md = ["## Demo: predictions on unseen test images", "",
+          "| Image | Case | Ground truth | Prediction | Dice |",
           "|---|---|---|---|---|"]
     for r in satirlar:
         md.append(f"| {r['ImageId']} | {r['durum']} | {r['gercek_siniflar']} | "
